@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmFlavor HomePage</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <script src="https://kit.fontawesome.com/e0dabf3899.js" crossorigin="anonymous"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600&display=swap" rel="stylesheet">
+    
+    
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@100;200;300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/e0dabf3899.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css"/>
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing: border-box;
+            font-family: 'Poppins',sans-serif;
+    
+    
+        }
+
+        .header{
+            background-color: #147c53;
+            display:flex;
+           padding: 20px 100px;
+           justify-content: space-between;
+           align-items: center;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .action {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            justify-content: center;
+            margin-left: auto;
+            margin-right: 30px;
+        }
+
+        .action div {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 100px;
+            color: #147c53;
+            fill: #147c53;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .action div > * > * {
+            border: none;
+            text-decoration: none;
+            outline: none;
+            background-color: white;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #xyz{
+            margin-right:8px;
+        }
+        #customer-care-number{
+        
+            color:#ffff;
+        }
+
+        main {
+          padding: 1rem 100px;
+        }
+    </style>
+</head>
+<body>
+    <!--Header No.1 (Green color wala)-->
+    <div class="header" >
+        <div class="logo">
+            FarmFlavor
+        </div>
+        
+        <div class="action">
+            <div style="margin-left: auto;">
+            <a href="/search"><i class="fa fa-search" style="color: #147c53;"></i></a>
+        </div>
+        <div>
+            <a href="/logout"><button id="logout-btn"><i class="fa-solid fa-right-from-bracket fa-lg" style="color: #147c53;"></i></i></i></button></a>
+        </div>
+        <div>
+            <a href="/mycart"><button id="mycart-btn"><i class="fa-solid fa-basket-shopping fa-lg" style="color: #147c53;"></i></i></button></a>
+        </div>
+    </div>    
+    <div class="customer-care">
+        <p id="customer-care-number"><i id="xyz" class="fa-solid fa-headphones fa-xl" style="color: #ffff;"></i>9020102010</p>
+    </div> 
+    </div>
+    
+    <main>
+      <form><input style="height: 2rem; width: 25rem; padding: 5px;" id="search" name="s" /> <button style="height: 2rem; padding: 0 2rem;">Submit</button>
+      <%= error %>
+      </form>
+
+      <ul style="margin-top: 30px ;display: grid; column-gap: 1rem; row-gap: 2rem; grid-template-columns: repeat(4, minmax(0, 1fr));">
+        <% recommended.forEach(function(item) { %>
+          <li style="list-style-type:none; border: 1px #dcdcdc solid; border-radius: 5px; padding: 20px; display: flex;  flex-direction: column;gap: 3px;">
+              <h3><%= item.Title %></h3>
+              <div style="display: flex; gap: 2rem; align-items: center;">
+                <div style="font-size: 0.75rem; display: flex; gap: 0.5rem; align-items: center;">
+                  <i class="fa-solid fa-star" style="color: #147c53;"></i>
+                  <p><%= item.AvgRating %></p>
+                </div>
+                <div style="font-size: 0.75rem; display: flex; gap: 0.5rem; align-items: center;">
+                  <i class="fa-regular fa-clock" style="color: #147c53;"></i>
+                  <p><%= item.TotalTime %></p>
+                </div>
+              </div>
+              
+              <a target="_blank" href="<%= item.RecipeURL %>" style="font-size: 0.75rem; margin-top: 2rem;"><p><%= item.RecipeURL %></p></a>
+              
+              <h4 style="margin-top: 1rem;">Ingredients</h4>
+              <p style="font-size: 0.9rem;"><%= item.Ingredients %></p>
+          </li>
+        <% }); %>
+      </ul>
+    </main>
+
+    
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+
+    <!--Script for sliding presentation-->
+    <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        const swiper = new Swiper('.swiper', {
+            // Optional parameters
+            autoplay:{
+                delay:3000,
+                disableOnInteraction:false,
+            },
+            loop: true,
+
+            // If we need pagination
+            pagination: {
+                el: '.swiper-pagination',
+            },
+
+            // Navigation arrows
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            });
+
+
+            async function handleAiClick(){
+                const search = document.getElementById('searchQueryInput').value;
+                if(search==""){
+                    alert("Enter a Dish Name to Search");
+                    return;
+                }
+                // alert(search);
+                const response = await fetch('/api/searchAI', {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({dish:search }),
+                });
+                if (response.ok) {
+                    Swal.fire({
+                        title: 'Item added to cart successfully',
+                        // text: 'Item added to cart successfully',
+                        icon: 'success',
+                        position: 'top-end', // Adjust the position as needed
+                        showConfirmButton: false,
+                        timer: 1500, // Display time for the notification (in milliseconds)
+                        customClass: 'small-toast', // Apply your custom CSS class
+                    });
+                } else {
+                    alert("Failed to add items to the cart. Please try again!");
+                }
+            }
+            
+
+
+    </script>
+    
+</body>
+</html>
