@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmFlavor Feedback</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <script src="https://kit.fontawesome.com/e0dabf3899.js" crossorigin="anonymous"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Poppins:wght@100;200;300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/e0dabf3899.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css"/>
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing: border-box;
+            font-family: 'Poppins',sans-serif;
+    
+    
+        }
+
+        .header{
+            background-color: #147c53;
+            display:flex;
+           padding: 20px 100px;
+           justify-content: space-between;
+           align-items: center;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .action {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            justify-content: center;
+            margin-left: auto;
+            margin-right: 30px;
+        }
+
+        .action div {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 100px;
+            color: #147c53;
+            fill: #147c53;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .action div > * > * {
+            border: none;
+            text-decoration: none;
+            outline: none;
+            background-color: white;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #xyz{
+            margin-right:8px;
+        }
+        #customer-care-number{
+        
+            color:#ffff;
+        }
+
+        main {
+          padding: 1rem 100px;
+        }
+    </style>
+</head>
+<body>
+    <!--Header No.1 (Green color wala)-->
+    <div class="header" >
+        <a href="/smoothies" class="logo">
+            FarmFlavor
+        </a>
+        
+        <div class="action">
+            <div style="margin-left: auto;">
+            <a href="/search"><i class="fa fa-search" style="color: #147c53;"></i></a>
+        </div>
+        <div>
+            <a href="/logout"><button id="logout-btn"><i class="fa-solid fa-right-from-bracket fa-lg" style="color: #147c53;"></i></i></i></button></a>
+        </div>
+        <div>
+            <a href="/mycart"><button id="mycart-btn"><i class="fa-solid fa-basket-shopping fa-lg" style="color: #147c53;"></i></i></button></a>
+        </div>
+    </div>    
+    <div class="customer-care">
+        <p id="customer-care-number"><i id="xyz" class="fa-solid fa-headphones fa-xl" style="color: #ffff;"></i>9020102010</p>
+    </div> 
+    </div>
+    
+    <main class="w-full h-full flex justify-center p-12 items-center">
+      <form class="w-full max-w-xl flex flex-col gap-6 border-2 border-slate-200 px-6 py-9 rounded-2xl">
+        <div class="flex flex-col">
+          <h3 class="text-green-600 text-4xl font-semibold">Feedback</h3>
+          <p class="text-sm text-slate-500">
+            We would love to hear your feedback. Please fill in the form below.
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label for="name" class="text-slate-700">Name</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            class="border-2 border-slate-200 focus:border-green-500 focus:outline-4 focus:outline focus:outline-slate-100 rounded-md px-3 py-2"
+            placeholder="Enter your name"
+            required
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <label for="email" class="text-slate-700">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            class="border-2 border-slate-200 focus:border-green-500 focus:outline-4 focus:outline focus:outline-slate-100 rounded-md px-3 py-2"
+            placeholder="Enter your email"
+            required
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <label for="review" class="text-slate-700">Review</label>
+          <textarea
+            id="review"
+            name="review"
+            class="border-2 border-slate-200 min-h-[7.5rem] max-h-[12.5rem] focus:border-green-500 focus:outline-4 focus:outline focus:outline-slate-100 rounded-md px-3 py-2"
+            placeholder="Enter your review"
+            required
+          ></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3">
+          <a href="/myorders" class="w-full max-w-[10rem] ml-auto bg-slate-100 rounded-md text-lg py-2" onclick="skip()">
+            Skip
+          </a>
+          <button class="w-full max-w-[10rem] bg-green-100 rounded-md text-lg py-2 hover:bg-green-300" type="submit">
+            Submit
+          </button>
+        </div>
+      </form>
+    </main>
+</body>
+</html>

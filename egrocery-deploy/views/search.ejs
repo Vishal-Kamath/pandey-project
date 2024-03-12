@@ -129,6 +129,7 @@
               <p style="font-size: 0.9rem;"><%= item.Ingredients %></p>
           </li>
         <% }); %>
+        <%= recommended?.length === 0 ? "No product found" : "" %>
       </ul>
     </main>
 

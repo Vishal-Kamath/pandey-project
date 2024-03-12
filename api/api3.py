@@ -10,9 +10,11 @@ import pandas as pd
 import spacy
 nlp = spacy.load("en_core_web_sm")
 from nltk import bigrams 
-
+from nltk.sentiment import SentimentIntensityAnalyzer
+import nltk
+nltk.download('vader_lexicon')
 app = Flask(__name__)
-recipes = pd.read_csv("df_recipes_cleaned.csv")
+recipes = pd.read_csv(r"df_recipes_cleaned.csv")
 
 # Load pre-trained NMF model
 def load_nmf_model(model_path):
@@ -34,9 +36,9 @@ def load_doc_topic(doc_topic_path):
     return doc_topic
 
 # Load pre-trained models and data
-nmf_model = load_nmf_model("NMF_model.sav")
-vectorizer = load_vectorizer('vectorizer.pkl')
-doc_topic = np.load('doc_topic.npy', allow_pickle=True)
+nmf_model = load_nmf_model(r"NMF_model.sav")
+vectorizer = load_vectorizer(r'vectorizer.pkl')
+doc_topic = np.load(r'doc_topic.npy', allow_pickle=True)
 
 # Placeholder preprocessing functions
 def preprocessor(text):
@@ -140,6 +142,19 @@ def recommendations():
         recommended_recipes.append(recipe_dict)
     
     return jsonify(recommended_recipes), 200
+
+sia = SentimentIntensityAnalyzer()
+
+@app.route('/sentiment', methods=['POST'])
+def analyze_sentiment():
+    data = request.json
+    text = data.get('text', '')
+
+    # Perform sentiment analysis
+    sentiment_scores = sia.polarity_scores(text)
+
+    return jsonify(sentiment_scores)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

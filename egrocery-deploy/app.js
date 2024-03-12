@@ -1,17 +1,17 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const authRoutes = require('./routes/authRoutes');
-const User = require('./models/User');
-const cookieParser = require('cookie-parser');
-const { requireAuth } = require('./middleware/authMiddleware');
-const { OpenAI } = require('openai');
-const _ = require('lodash');
-const axios = require("axios")
-require('dotenv').config();
+const express = require("express");
+const mongoose = require("mongoose");
+const authRoutes = require("./routes/authRoutes");
+const User = require("./models/User");
+const cookieParser = require("cookie-parser");
+const { requireAuth } = require("./middleware/authMiddleware");
+const { OpenAI } = require("openai");
+const _ = require("lodash");
+const axios = require("axios");
+require("dotenv").config();
 
 // const openai = new OpenAI({
 //  apiKey: process.env.OPENAI_KEY,
-// }); 
+// });
 const app = express();
 
 const cartSchema = new mongoose.Schema({
@@ -32,7 +32,7 @@ const cartSchema = new mongoose.Schema({
     required: true,
   },
 });
-const Cart = mongoose.model('Cart', cartSchema);
+const Cart = mongoose.model("Cart", cartSchema);
 // Define a schema for the Product model
 const productSchema = new mongoose.Schema({
   name: {
@@ -56,8 +56,8 @@ const productSchema = new mongoose.Schema({
   },
   stock: {
     type: Number,
-    required:true,
-  }
+    required: true,
+  },
   // You can add more fields as needed for your products
 });
 //Orders placed
@@ -85,14 +85,14 @@ const orderSchema = new mongoose.Schema({
   },
   // Shipping address
   address: {
-    type:String,
-    required:true,
-    default:"Room 101 Default Building,Mumbai",
+    type: String,
+    required: true,
+    default: "Room 101 Default Building,Mumbai",
   },
   // Payment method used
   paymentMethod: {
     type: String,
-    default:"Cash on Delivery",
+    default: "Cash on Delivery",
     required: true,
   },
   // Date and time when the order was placed
@@ -103,93 +103,142 @@ const orderSchema = new mongoose.Schema({
   // Order status (e.g., processing, shipped, delivered)
   status: {
     type: String,
-    enum: ['Processing', 'Shipped', 'Delivered'],
-    default: 'Processing',
+    enum: ["Processing", "Shipped", "Delivered"],
+    default: "Processing",
   },
 });
-const Order = mongoose.model('Order', orderSchema);
 
+const feedbackSchema = mongoose.Schema({
+  name: String,
+  email: String,
+  review: String,
+  compound: Number,
+  neg: Number,
+  neu: Number,
+  pos: Number,
+});
 
+const Order = mongoose.model("Order", orderSchema);
 
 // Create a model for the Product schema
-const Product = mongoose.model('Product', productSchema);
+const Product = mongoose.model("Product", productSchema);
 
+const FeedBack = mongoose.model("Feedback", feedbackSchema);
 // middleware
-app.use(express.static('public'));
+app.use(express.static("public"));
 app.use(express.json());
 app.use(cookieParser());
 
 // view engine
-app.set('view engine', 'ejs');
+app.set("view engine", "ejs");
 
 // database connection
-const dbURI = 'mongodb+srv://tsemwal:tsemwal@cluster0.yzsyf3y.mongodb.net/test';
-mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then((result) => app.listen(3001, () => console.log("Listening at port 3001")))
+const dbURI =
+  "mongodb+srv://AbhiGupta:JdHFhsClIfeeP0zh@cluster0.eaamefr.mongodb.net/minipandey?retryWrites=true&w=majority&appName=Cluster0";
+mongoose
+  .connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then((result) =>
+    app.listen(3001, () => console.log("Listening at port 3001"))
+  )
   .catch((err) => console.log(err));
 
 // routes
-app.get('/', (req, res) => res.render('home'));
+app.get("/", (req, res) => res.render("home"));
 
-app.get('/smoothies', requireAuth, async (req, res) => {
+app.get("/smoothies", requireAuth, async (req, res) => {
   const user = req.user;
-  const cartItems = await Cart.find({ id : user });
-  res.render('smoothies', { user:user,cartItems });
+  const cartItems = await Cart.find({ id: user });
+  res.render("smoothies", { user: user, cartItems });
 });
-
-
-
-
 
 // -------------------------------------------------------------------------------------
 // Search
 // -------------------------------------------------------------------------------------
 
-app.get('/search', requireAuth, async (req, res) => {
+app.get("/search", requireAuth, async (req, res) => {
   const user = req.user;
-  const {s} = req.query
+  const { s } = req.query;
   if (s === undefined)
-    res.render('search', { user:user, error:"", recommended: []});
+    res.render("search", { user: user, error: "", recommended: [] });
 
-  const inputs = s.split(",").filter(val => !!val.trim())
-  if (inputs.length < 5) {
-    return res.render('search', { user:user, error: "input atleast 5 ingredient", recommended: []});
+  const inputs = s?.split(",").filter((val) => !!val.trim());
+  if (inputs?.length < 5) {
+    return res.render("search", {
+      user: user,
+      error: "input atleast 5 ingredient",
+      recommended: [],
+    });
   }
 
-  axios.post("http://127.0.0.1:5000/recommendations", {
-    ingredients: s
-  }).then(response => {
-    res.render('search', { user:user, error:"", recommended: Array.isArray(response.data) ? response.data : []});
-  }).catch((err) => {
-    console.log(err)
-    res.render('search', { user:user, error:"something went wrong", recommended: []});
-  })
+  axios
+    .post("http://127.0.0.1:5000/recommendations", {
+      ingredients: s,
+    })
+    .then((response) => {
+      res.render("search", {
+        user: user,
+        error: "",
+        recommended: Array.isArray(response.data) ? response.data : [],
+      });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.render("search", {
+        user: user,
+        error: "something went wrong",
+        recommended: [],
+      });
+    });
+});
 
-  
+// -------------------------------------------------------------------------------------
+// Feedback form
+// -------------------------------------------------------------------------------------
+app.get("/feedback", requireAuth, async (req, res) => {
+  const { name, email, review } = req.query;
+  if (!name || !email || !review) return res.render("feedback");
+
+  axios
+    .post("http://127.0.0.1:5000/sentiment", {
+      text: review,
+    })
+    .then(async (response) => {
+      const { neg, neu, pos } = response.data;
+
+      await new FeedBack({
+        name,
+        email,
+        review,
+        neg,
+        neu,
+        pos,
+      }).save();
+
+      res.status(301).redirect("/myorders");
+    });
 });
 
 // Display the cart items
 // In your server route that renders the page
-app.get('/mycart', requireAuth, async (req, res) => {
+app.get("/mycart", requireAuth, async (req, res) => {
   try {
     // Fetch and display the cart items for the currently authenticated user
     const cartItems = await Cart.find({ id: req.user });
 
     // Create a map of item names to indicate if each item is in the cart
     const itemInCartMap = {};
-    cartItems.forEach(item => {
+    cartItems.forEach((item) => {
       itemInCartMap[item.name] = true;
     });
 
-    res.render('cart', { cartItems, itemInCartMap, itemIndex: 0 }); // Pass itemIndex as 0
+    res.render("cart", { cartItems, itemInCartMap, itemIndex: 0 }); // Pass itemIndex as 0
   } catch (error) {
-    console.error('Error fetching cart items:', error);
-    res.status(500).send('Internal server error');
+    console.error("Error fetching cart items:", error);
+    res.status(500).send("Internal server error");
   }
 });
 
-
-app.post('/add-to-cart', requireAuth, async (req, res) => {
+app.post("/add-to-cart", requireAuth, async (req, res) => {
   const { userId, item, quantity, totalPrice } = req.body;
 
   try {
@@ -212,106 +261,113 @@ app.post('/add-to-cart', requireAuth, async (req, res) => {
       await cartItem.save();
     }
 
-    res.status(200).json({ message: 'Item added to cart successfully' });
+    res.status(200).json({ message: "Item added to cart successfully" });
   } catch (error) {
-    console.error('Error adding item to cart:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error adding item to cart:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.delete('/remove-from-cart/:userId/:itemId', requireAuth, async (req, res) => {
-  const userId = req.params.userId;
-  const itemId = req.params.itemId;
-  try {
-    // Find and remove the item from the cart
-    const result = await Cart.deleteOne({ id: req.user, _id: itemId });
+app.delete(
+  "/remove-from-cart/:userId/:itemId",
+  requireAuth,
+  async (req, res) => {
+    const userId = req.params.userId;
+    const itemId = req.params.itemId;
+    try {
+      // Find and remove the item from the cart
+      const result = await Cart.deleteOne({ id: req.user, _id: itemId });
 
-    if (result.deletedCount === 1) {
-      res.status(200).json({ message: 'Item removed from cart successfully' });
-    } else {
-      res.status(404).json({ error: 'Item not found in cart' });
+      if (result.deletedCount === 1) {
+        res
+          .status(200)
+          .json({ message: "Item removed from cart successfully" });
+      } else {
+        res.status(404).json({ error: "Item not found in cart" });
+      }
+    } catch (error) {
+      console.error("Error removing item from cart:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
-
-  } catch (error) {
-    console.error('Error removing item from cart:', error);
-    res.status(500).json({ error: 'Internal server error' });
   }
-});
-app.get('/products', requireAuth, async (req, res) => {
+);
+app.get("/products", requireAuth, async (req, res) => {
   try {
     // Render an HTML view for products
-    res.render('products');
+    res.render("products");
   } catch (error) {
-    console.error('Error rendering products view:', error);
-    res.status(500).send('Internal server error');
+    console.error("Error rendering products view:", error);
+    res.status(500).send("Internal server error");
   }
 });
-app.get('/api/products', requireAuth, async (req, res) => {
+app.get("/api/products", requireAuth, async (req, res) => {
   try {
     const category = req.query.category; // Get the category from the query parameter
     const minPrice = parseFloat(req.query.minPrice); // Get the min price from the query parameter
     const maxPrice = parseFloat(req.query.maxPrice); // Get the max price from the query parameter
     console.log(category);
 
-
     // Build a query to fetch products based on category and price range
     const query = {};
     if (category) {
-        query.category = category;
+      query.category = category;
     }
     if (!isNaN(minPrice) && !isNaN(maxPrice)) {
-        query.price = { $gte: minPrice, $lte: maxPrice };
-        console.log(query);
+      query.price = { $gte: minPrice, $lte: maxPrice };
+      console.log(query);
     }
 
     // Fetch products from the database and send as JSON
     const products = await Product.find(query);
-    console.log(products)
+    console.log(products);
 
     res.json(products);
-    } catch (error) {
-        console.error('Error fetching products:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
-app.get('/api/nameProducts', requireAuth, async (req, res) => {
+app.get("/api/nameProducts", requireAuth, async (req, res) => {
   try {
     const name = req.query.name; // Get the category from the query parameter
-    
-    const lowercaseName = name ? name.toLowerCase() : '';
+
+    const lowercaseName = name ? name.toLowerCase() : "";
     // Build a query to fetch products based on the category
     // const query = name ? { name } : {}; // If category is provided, filter by category; otherwise, fetch all products
-    const query = name ? { name: { $regex: new RegExp(lowercaseName, 'i') } } : {};
+    const query = name
+      ? { name: { $regex: new RegExp(lowercaseName, "i") } }
+      : {};
     // Fetch products from the database and send as JSON
     const products = await Product.find(query); // Replace 'Product' with your model name
-    
-    
+
     res.json(products);
   } catch (error) {
-    console.error('Error fetching products:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error fetching products:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 // Add a new route to fetch hotdeals data from MongoDB
-app.get('/api/hotdeals', requireAuth, async (req, res) => {
+app.get("/api/hotdeals", requireAuth, async (req, res) => {
   try {
     // Fetch hotdeals data from MongoDB
-    const hotdealsData = await Product.find({ category: 'hotdeals' });
+    const hotdealsData = await Product.find({ category: "hotdeals" });
 
     // Send the hotdeals data as JSON response
     res.json(hotdealsData);
   } catch (error) {
-    console.error('Error fetching hotdeals data:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error fetching hotdeals data:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.post('/checkout', requireAuth, async (req, res) => {
+app.post("/checkout", requireAuth, async (req, res) => {
   try {
     const userId = req.user;
     const address = req.body.address;
-    if (!req.body.address || req.body.address.trim() === '') {
-      return res.status(400).json({ success: false, error: 'Address is required for checkout' });
+    if (!req.body.address || req.body.address.trim() === "") {
+      return res
+        .status(400)
+        .json({ success: false, error: "Address is required for checkout" });
     }
     // Fetch the user's cart items
     const cartItems = await Cart.find({ id: userId });
@@ -322,13 +378,16 @@ app.post('/checkout', requireAuth, async (req, res) => {
 
       if (!product || product.stock < cartItem.quantity) {
         // If the product is not found or there's not enough stock, return an error
-        return res.status(400).json({ success: false, error: 'Not enough stock for an item in the cart' });
+        return res.status(400).json({
+          success: false,
+          error: "Not enough stock for an item in the cart",
+        });
       }
     }
 
     // Calculate the subtotal
     let subtotal = 0;
-    cartItems.forEach(item => {
+    cartItems.forEach((item) => {
       subtotal += parseFloat(item.totalPrice);
     });
 
@@ -342,29 +401,33 @@ app.post('/checkout', requireAuth, async (req, res) => {
     // Check the payment method selected by the user
     const paymentMethod = req.body.paymentMethod;
 
-    if (paymentMethod === 'MyWallet') {
+    if (paymentMethod === "MyWallet") {
       // Retrieve the user's current wallet balance from the database
       const user = await User.findById(userId);
 
       if (!user) {
-        return res.status(404).json({ success: false, error: 'User not found' });
+        return res
+          .status(404)
+          .json({ success: false, error: "User not found" });
       }
 
       // Check if the user has sufficient balance for the purchase
       if (user.wallet < totalPrice) {
-        return res.status(400).json({ success: false, error: 'Insufficient balance for checkout' });
+        return res
+          .status(400)
+          .json({ success: false, error: "Insufficient balance for checkout" });
       }
 
       // Deduct the total price from the user's wallet
       user.wallet -= totalPrice;
-      user.purchaseValue+= totalPrice;
+      user.purchaseValue += totalPrice;
 
       // Save the updated wallet balance back to the database
       await user.save();
     }
 
     // Create an array to store the items ordered for the Order schema
-    const itemsOrdered = cartItems.map(cartItem => ({
+    const itemsOrdered = cartItems.map((cartItem) => ({
       name: cartItem.name,
       quantity: cartItem.quantity,
     }));
@@ -392,30 +455,29 @@ app.post('/checkout', requireAuth, async (req, res) => {
     // Clear the user's cart
     await Cart.deleteMany({ id: userId });
 
-    res.status(200).json({ success: true, message: 'Checkout successful' });
+    res.status(200).json({ success: true, message: "Checkout successful" });
   } catch (error) {
-    console.error('Error during checkout:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    console.error("Error during checkout:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
 
-
 //For myorders page
-app.get('/myorders', requireAuth, async (req, res) => {
+app.get("/myorders", requireAuth, async (req, res) => {
   try {
     // Fetch the user's orders from the Order model based on their user ID
     const userId = req.user;
     const userOrders = await Order.find({ id: userId }).sort({ date: -1 }); // Sort orders by date in descending order
 
     // Render the "My Orders" page and pass the orders data to the template
-    res.render('myorders', { orders: userOrders });
+    res.render("myorders", { orders: userOrders });
   } catch (error) {
-    console.error('Error fetching user orders:', error);
-    res.status(500).send('Internal server error');
+    console.error("Error fetching user orders:", error);
+    res.status(500).send("Internal server error");
   }
 });
 // ...
-app.delete('/cancel-order/:orderId', requireAuth, async (req, res) => {
+app.delete("/cancel-order/:orderId", requireAuth, async (req, res) => {
   try {
     const orderId = req.params.orderId;
     const userId = req.user;
@@ -424,15 +486,18 @@ app.delete('/cancel-order/:orderId', requireAuth, async (req, res) => {
     const order = await Order.findOne({ _id: orderId, id: userId });
 
     if (!order) {
-      return res.status(404).json({ success: false, error: 'Order not found' });
+      return res.status(404).json({ success: false, error: "Order not found" });
     }
-    if(order.status === 'Shipped'){
-      return res.status(400).json({ success: false, error: 'Cannot cancel order that has been shipped' });
+    if (order.status === "Shipped") {
+      return res.status(400).json({
+        success: false,
+        error: "Cannot cancel order that has been shipped",
+      });
     }
 
     // If the payment method is "Cash on Delivery" (COD), do not refund the wallet
-    
-      // Iterate through the items in the canceled order
+
+    // Iterate through the items in the canceled order
     for (const itemOrdered of order.itemsOrdered) {
       const productName = itemOrdered.name;
       const productQuantity = itemOrdered.quantity;
@@ -441,61 +506,62 @@ app.delete('/cancel-order/:orderId', requireAuth, async (req, res) => {
       const product = await Product.findOne({ name: productName });
 
       if (!product) {
-        console.error('Product not found:', productName);
+        console.error("Product not found:", productName);
         continue;
       }
 
       // Log the product and its stock before the update
-      console.log('Product Before Update:', product);
+      console.log("Product Before Update:", product);
 
       // Refund the stock for the canceled items
       product.stock += productQuantity;
-      
 
       await product.save();
 
       // Log the product and its stock after the update
-      console.log('Product After Update:', product);
+      console.log("Product After Update:", product);
     }
-    
 
     // If the payment method is "MyWallet," refund the order amount to the user's wallet
-    if (order.paymentMethod === 'MyWallet') {
+    if (order.paymentMethod === "MyWallet") {
       const refundedAmount = order.totalPrice;
       const user = await User.findById(userId);
 
       if (!user) {
-        return res.status(404).json({ success: false, error: 'User not found' });
+        return res
+          .status(404)
+          .json({ success: false, error: "User not found" });
       }
 
       // Log the user's wallet balance before the refund
-      console.log('User Wallet Before Refund:', user.wallet);
+      console.log("User Wallet Before Refund:", user.wallet);
 
       // Refund the amount to the user's wallet
       user.wallet += refundedAmount;
-      user.purchaseValue-= refundedAmount;
-
+      user.purchaseValue -= refundedAmount;
 
       // Save the updated wallet balance back to the user's document
       await user.save();
 
       // Log the user's wallet balance after the refund
-      console.log('User Wallet After Refund:', user.wallet);
+      console.log("User Wallet After Refund:", user.wallet);
     }
 
     // Delete the canceled order
     await Order.deleteOne({ _id: orderId });
 
-    res.status(200).json({ success: true, message: 'Order canceled successfully' });
+    res
+      .status(200)
+      .json({ success: true, message: "Order canceled successfully" });
   } catch (error) {
-    console.error('Error canceling order:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    console.error("Error canceling order:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
 
 // ... (previous code)
 
-app.get('/mywallet', requireAuth, async (req, res) => {
+app.get("/mywallet", requireAuth, async (req, res) => {
   try {
     // Retrieve the user's wallet balance from the database
     const userId = req.user;
@@ -503,35 +569,35 @@ app.get('/mywallet', requireAuth, async (req, res) => {
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).send('User not found');
+      return res.status(404).send("User not found");
     }
 
     // Pass the user's wallet balance to the template
     const walletBalance = user.wallet;
 
     // Render the "My Wallet" page and pass the walletBalance to the template
-    res.render('mywallet', { walletBalance });
+    res.render("mywallet", { walletBalance });
   } catch (error) {
-    console.error('Error fetching wallet balance:', error);
-    res.status(500).send('Internal server error');
+    console.error("Error fetching wallet balance:", error);
+    res.status(500).send("Internal server error");
   }
 });
 
-app.post('/add-money-to-wallet', requireAuth, async (req, res) => {
+app.post("/add-money-to-wallet", requireAuth, async (req, res) => {
   try {
     const userId = req.user;
     const { amount } = req.body;
 
     // Validate the amount (e.g., check if it's a positive number)
     if (isNaN(amount) || amount <= 0) {
-      return res.status(400).json({ success: false, error: 'Invalid amount' });
+      return res.status(400).json({ success: false, error: "Invalid amount" });
     }
 
     // Retrieve the user's current wallet balance from the database
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' });
+      return res.status(404).json({ success: false, error: "User not found" });
     }
 
     // Update the user's wallet balance by adding the parsed amount
@@ -541,32 +607,36 @@ app.post('/add-money-to-wallet', requireAuth, async (req, res) => {
     await user.save();
 
     // Send a success response
-    res.status(200).json({ success: true, message: 'Amount added to wallet successfully' });
+    res
+      .status(200)
+      .json({ success: true, message: "Amount added to wallet successfully" });
   } catch (error) {
-    console.error('Error adding money to wallet:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    console.error("Error adding money to wallet:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
-app.post('/withdraw-money-from-wallet', requireAuth, async (req, res) => {
+app.post("/withdraw-money-from-wallet", requireAuth, async (req, res) => {
   try {
     const userId = req.user;
     const { amount } = req.body;
 
     // Validate the withdrawal amount (e.g., check if it's a positive number)
     if (isNaN(amount) || amount <= 0) {
-      return res.status(400).json({ success: false, error: 'Invalid amount' });
+      return res.status(400).json({ success: false, error: "Invalid amount" });
     }
 
     // Retrieve the user's current wallet balance from the database
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' });
+      return res.status(404).json({ success: false, error: "User not found" });
     }
 
     // Check if the user has sufficient balance for withdrawal
     if (user.wallet < parseFloat(amount)) {
-      return res.status(400).json({ success: false, error: 'Insufficient balance for withdrawal' });
+      return res
+        .status(400)
+        .json({ success: false, error: "Insufficient balance for withdrawal" });
     }
 
     // Update the user's wallet balance by subtracting the parsed amount
@@ -576,51 +646,161 @@ app.post('/withdraw-money-from-wallet', requireAuth, async (req, res) => {
     await user.save();
 
     // Send a success response
-    res.status(200).json({ success: true, message: 'Amount withdrawn from wallet successfully' });
+    res.status(200).json({
+      success: true,
+      message: "Amount withdrawn from wallet successfully",
+    });
   } catch (error) {
-    console.error('Error withdrawing money from wallet:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    console.error("Error withdrawing money from wallet:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
 
-app.get('/pastorders', requireAuth, async (req, res) => {
+app.get("/pastorders", requireAuth, async (req, res) => {
   try {
     // Fetch the user's orders with the status "Delivered" from the Order model based on their user ID
     const userId = req.user;
-    const deliveredOrders = await Order.find({ id: userId, status: 'Delivered' }).sort({ date: -1 }); // Sort orders by date in descending order
+    const deliveredOrders = await Order.find({
+      id: userId,
+      status: "Delivered",
+    }).sort({ date: -1 }); // Sort orders by date in descending order
 
     // Render the "Past Orders" page and pass the orders data to the template
-    res.render('pastorders', { orders: deliveredOrders });
+    res.render("pastorders", { orders: deliveredOrders });
   } catch (error) {
-    console.error('Error fetching delivered orders:', error);
-    res.status(500).send('Internal server error');
+    console.error("Error fetching delivered orders:", error);
+    res.status(500).send("Internal server error");
   }
 });
 
 // RECOMMENDATION SYSTEM
 
-const stringSimilarity = require('string-similarity');
+const stringSimilarity = require("string-similarity");
 
 // Sample inventory
 //urad dal-> Black Gram; Toor Dal-> Pigeon Peas;Yogurt->curd
 const inventory = [
-  'Peas', 'Soy Sauce', 'Spring Onion', 'Corn Flour', 'Oil', 'Asafoetida (Hing)', 'Butter', 'Onion', 'Tomato',
-  'Cauliflower', 'Red Chili Powder', 'Potato', 'Capsicum', 'Garlic', 'Ginger', 'Green Chilies', 'Carrot', 'Rice',
-  'Wheat', 'Bread', 'Cucumber', 'Milk', 'Turmeric Powder', 'Coffee Powder', 'Tea Leaves', 'Sugar', 'Pav Bhaji Masala',
-  'Cumin Powder', 'Paneer', 'Garam Masala', 'Chickpeas', 'Black Gram', 'Kidney Beans', 'Pigeon Peas', 'Coriander',
-  'Curd', 'Cardamom', 'Gram Flour', 'All Purpose Flour', 'Baking Powder', 'Lemon', 'Mint', 'Salt','Cashew','Sesame Seeds','Clove',
-  'Star Anise','Fennel Seeds','Sambar Powder','Bay Leaves','Mustard Seeds','Cumin Seeds','Dry Mango Powder','Curry Leaves','Egg','Cocoa Powder','Drumsticks','Red Chili Sauce','Cream',
-  'Vanilla Extract','Sprouts','Okra','tamarind','Cabbage','Pumpkin','Brinjal','Apple','Banana','Mango','Strawberry','Pineapple','Kiwi','Custard Apple','Jamun','Musk Melon','Raspberry'
-  ,'Pear','Papaya','Guava','Water Melon','Black/Green Grapes','Bell Pepper','Torai','Parval','Matki','Lobia','Masoor','Urad Dal','Toor Dal','Yogurt','Cinnamon','Pav','Besan Flour','Lady Finger','Coconut','Chana',
-  'Mayonnaise','Beans','Saffron','Carrom Seeds','ajwain','Spinach','Black Pepper','Black Salt','Ghee','Noodles','Black Lentil','Chickpea Flour','Coffee Beans'
+  "Peas",
+  "Soy Sauce",
+  "Spring Onion",
+  "Corn Flour",
+  "Oil",
+  "Asafoetida (Hing)",
+  "Butter",
+  "Onion",
+  "Tomato",
+  "Cauliflower",
+  "Red Chili Powder",
+  "Potato",
+  "Capsicum",
+  "Garlic",
+  "Ginger",
+  "Green Chilies",
+  "Carrot",
+  "Rice",
+  "Wheat",
+  "Bread",
+  "Cucumber",
+  "Milk",
+  "Turmeric Powder",
+  "Coffee Powder",
+  "Tea Leaves",
+  "Sugar",
+  "Pav Bhaji Masala",
+  "Cumin Powder",
+  "Paneer",
+  "Garam Masala",
+  "Chickpeas",
+  "Black Gram",
+  "Kidney Beans",
+  "Pigeon Peas",
+  "Coriander",
+  "Curd",
+  "Cardamom",
+  "Gram Flour",
+  "All Purpose Flour",
+  "Baking Powder",
+  "Lemon",
+  "Mint",
+  "Salt",
+  "Cashew",
+  "Sesame Seeds",
+  "Clove",
+  "Star Anise",
+  "Fennel Seeds",
+  "Sambar Powder",
+  "Bay Leaves",
+  "Mustard Seeds",
+  "Cumin Seeds",
+  "Dry Mango Powder",
+  "Curry Leaves",
+  "Egg",
+  "Cocoa Powder",
+  "Drumsticks",
+  "Red Chili Sauce",
+  "Cream",
+  "Vanilla Extract",
+  "Sprouts",
+  "Okra",
+  "tamarind",
+  "Cabbage",
+  "Pumpkin",
+  "Brinjal",
+  "Apple",
+  "Banana",
+  "Mango",
+  "Strawberry",
+  "Pineapple",
+  "Kiwi",
+  "Custard Apple",
+  "Jamun",
+  "Musk Melon",
+  "Raspberry",
+  "Pear",
+  "Papaya",
+  "Guava",
+  "Water Melon",
+  "Black/Green Grapes",
+  "Bell Pepper",
+  "Torai",
+  "Parval",
+  "Matki",
+  "Lobia",
+  "Masoor",
+  "Urad Dal",
+  "Toor Dal",
+  "Yogurt",
+  "Cinnamon",
+  "Pav",
+  "Besan Flour",
+  "Lady Finger",
+  "Coconut",
+  "Chana",
+  "Mayonnaise",
+  "Beans",
+  "Saffron",
+  "Carrom Seeds",
+  "ajwain",
+  "Spinach",
+  "Black Pepper",
+  "Black Salt",
+  "Ghee",
+  "Noodles",
+  "Black Lentil",
+  "Chickpea Flour",
+  "Coffee Beans",
 ];
 // Define an array to store the results
 const results = [];
 function findMatchingItem(modelItemName, inventory) {
   const matches = stringSimilarity.findBestMatch(modelItemName, inventory);
-  
+
   const similarityThreshold = 0.6;
-  console.log(inventory[matches.bestMatchIndex]," : ",matches.bestMatch.rating);
+  console.log(
+    inventory[matches.bestMatchIndex],
+    " : ",
+    matches.bestMatch.rating
+  );
 
   if (matches.bestMatch.rating >= similarityThreshold) {
     return inventory[matches.bestMatchIndex];
@@ -633,16 +813,14 @@ function findMatchingItem(modelItemName, inventory) {
 //   console.log(dish);
 //   try{
 
-  
 //   const response = await openai.chat.completions.create({
 //     model: "gpt-3.5-turbo",
 //     messages: [{"role": "system", "content": "You are a helpful assistant.Return array only no other text or explanations."},
 //         {"role": "user", "content": `
-        
+
 //     return extensive list of items used for making dish ${dish} as an array.Return only english name.Use specific name of spices.Use specific name of vegetables.Do not return water.Make sure that first letter is always capital.if nothing present in the list return empty object.Do not nest`},
 //         ],
 //   });
-  
 
 //   // console.log(response.choices[0].message.content);
 //   const dishItems = response.choices[0].message.content;
@@ -655,14 +833,13 @@ function findMatchingItem(modelItemName, inventory) {
 //       const UpperCaseItem = _.startCase(item);
 
 //       const matchingItem = findMatchingItem(UpperCaseItem, inventory);
-      
+
 //       finalmatch.push(matchingItem);
 
 //       finalmatch = finalmatch.filter((item) => item !== null);
 
-
 //     });
-    
+
 //     let ingredientnumber = 0;
 //     finalmatch.forEach((ingredient) => {
 //       if (ingredient === "Urad Dal") {
@@ -685,7 +862,7 @@ function findMatchingItem(modelItemName, inventory) {
 //         finalmatch[ingredientnumber]  = "Coffee Powder";
 //       }
 //       ingredientnumber=ingredientnumber+1;
-      
+
 //     });
 
 //     console.log("You need : ");
@@ -693,7 +870,6 @@ function findMatchingItem(modelItemName, inventory) {
 //     await finalmatch.forEach(async(item)=>{
 //       const existingCartItem = await Cart.findOne({ id: req.user, name: item });
 //       const price = await Product.findOne({name:item})
-      
 
 //     if (existingCartItem) {
 //       // If the item is already in the cart, update the quantity and total price
@@ -705,7 +881,7 @@ function findMatchingItem(modelItemName, inventory) {
 //       //console.log("added item :",item,"to cart")
 //     } else {
 //       // If the item is not in the cart, create a new cart item
-      
+
 //       const cartItem = new Cart({
 //         id: req.user,
 //         name: item,
@@ -716,18 +892,17 @@ function findMatchingItem(modelItemName, inventory) {
 //       //console.log("added item :",item,"to cart")
 //     }
 //     })
-    
 
 //   }else{
 //     res.status(400).send('Invalid JSON response from GPT');
-    
+
 //   }
 //   res.status(200).send('Items added to cart');
 // }
 // catch(error){
 //   console.error("Error:", error);
 //   res.status(500).send('Internal server error');
-  
+
 // }
 // })
 module.exports = Product;
